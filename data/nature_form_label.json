@@ -1,0 +1,107 @@
+{
+    "CoNLL-2003": {
+        "all_type": [
+            "B-organization",
+            "O",
+            "B-miscellaneous",
+            "B-person",
+            "I-person",
+            "B-location",
+            "I-organization",
+            "I-miscellaneous",
+            "I-location"
+        ],
+        "type_num": 4,
+        "all_len": 9
+    },
+    "JNLPBA": {
+        "all_type": [
+            "B-deoxyribonucleic acid",
+            "I-deoxyribonucleic acid",
+            "O",
+            "B-protein",
+            "I-protein",
+            "B-cell_type",
+            "I-cell_type",
+            "B-cell_line",
+            "I-cell_line",
+            "B-ribonucleic acid",
+            "I-ribonucleic acid"
+        ],
+        "type_num": 5,
+        "all_len": 11
+    },
+    "MIT-Movie": {
+        "all_type": [
+            "B-Actor",
+            "I-Actor",
+            "O",
+            "B-Plot",
+            "I-Plot",
+            "B-Opinion",
+            "I-Opinion",
+            "B-Award",
+            "I-Award",
+            "B-Year",
+            "B-Genre",
+            "B-Origin",
+            "I-Origin",
+            "B-Director",
+            "I-Director",
+            "I-Genre",
+            "I-Year",
+            "B-Soundtrack",
+            "I-Soundtrack",
+            "B-Relationship",
+            "I-Relationship",
+            "B-Character_Name",
+            "I-Character_Name",
+            "B-Quote",
+            "I-Quote"
+        ],
+        "type_num": 12,
+        "all_len": 25
+    },
+    "MIT-Restaurant": {
+        "all_type": [
+            "B-Rating",
+            "I-Rating",
+            "O",
+            "B-Amenity",
+            "I-Amenity",
+            "B-Location",
+            "I-Location",
+            "B-Restaurant_Name",
+            "I-Restaurant_Name",
+            "B-Price",
+            "B-Hour",
+            "I-Hour",
+            "B-Dish",
+            "I-Dish",
+            "B-Cuisine",
+            "I-Price",
+            "I-Cuisine"
+        ],
+        "type_num": 8,
+        "all_len": 17
+    },
+    "WNUT-2017": {
+        "all_type": [
+            "O",
+            "B-location",
+            "I-location",
+            "B-group",
+            "B-corporation",
+            "B-person",
+            "B-creative work",
+            "B-product",
+            "I-person",
+            "I-creative work",
+            "I-corporation",
+            "I-group",
+            "I-product"
+        ],
+        "type_num": 6,
+        "all_len": 13
+    }
+}

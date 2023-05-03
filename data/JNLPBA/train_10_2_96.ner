@@ -1,0 +1,50 @@
+O O O O O O O O O B-cell_type I-cell_type I-cell_type O O O O O O O O O O O O O O O O O O B-protein O B-protein O O B-protein I-protein O O O O O O O O O B-DNA I-DNA O O O O O O O O O O B-DNA I-DNA I-DNA O
+O O O O B-DNA I-DNA I-DNA I-DNA O O O B-DNA I-DNA I-DNA O O O O B-protein I-protein O
+O O O O O O O O O O O O O B-DNA I-DNA O O O O O
+O O O O O O O O O O B-DNA I-DNA I-DNA I-DNA I-DNA O O O O B-cell_type I-cell_type I-cell_type I-cell_type I-cell_type I-cell_type O
+O O O B-protein O B-cell_type I-cell_type I-cell_type I-cell_type I-cell_type O O O O O O O O O B-DNA I-DNA O O O O O O
+O O O O O O O O O O B-protein I-protein B-protein I-protein I-protein I-protein O O B-DNA I-DNA I-DNA O B-DNA O O O B-DNA I-DNA O O O O O B-DNA I-DNA I-DNA O B-protein I-protein O
+O O O O O O B-protein O O B-DNA I-DNA I-DNA O B-DNA O O O O O O O O O O O O O
+O O O O O O O O O O B-protein I-protein B-protein O O B-protein I-protein O O O B-DNA I-DNA I-DNA I-DNA O O O O B-protein I-protein O
+O O O O B-DNA I-DNA I-DNA O O B-DNA I-DNA I-DNA I-DNA I-DNA I-DNA O O O O
+B-cell_line I-cell_line I-cell_line O O O B-protein I-protein I-protein O B-protein O O O O O O O O O O O O O B-DNA I-DNA I-DNA O O O O O O O O
+O O O O B-protein O B-protein I-protein O B-cell_type I-cell_type O O B-DNA I-DNA O O
+O O O O O O O O O O B-DNA I-DNA I-DNA O O O O O O O O O O O B-protein I-protein I-protein I-protein O O B-DNA I-DNA O
+B-protein I-protein O O O O O O O B-cell_type I-cell_type O O O O O O O O O B-protein I-protein O B-cell_line I-cell_line I-cell_line I-cell_line O
+O O O O B-protein O O O O O O O B-protein O O O O O O
+O O O O B-protein I-protein I-protein I-protein I-protein I-protein I-protein I-protein O O O O O O O O O O O O O O
+O O O O O O O O O O B-protein I-protein I-protein O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O B-protein I-protein I-protein I-protein O O O O O O O O O O O O O O O O O O
+B-protein O O O O O O O O O O O O O O B-cell_type O O O O O O
+O O O O B-DNA I-DNA I-DNA I-DNA O O O O O O O O O O O O O B-protein I-protein O O B-protein I-protein O O O O O O O O O O O O O O
+O O O O O O O O O O O O O B-protein I-protein O O O O O O O O O
+O O B-protein O B-protein O B-protein O O O O O O O O O O O O O O O O O O O O O
+O O O B-protein O O O O B-cell_type I-cell_type O B-cell_type I-cell_type O O O
+O O O O O O O O O O O O B-cell_type I-cell_type I-cell_type I-cell_type O O B-cell_type I-cell_type O
+O O O B-protein O O O O O O O B-cell_type B-protein I-protein O
+O O O O O B-cell_type I-cell_type O O O O B-protein O B-protein I-protein I-protein O O O O O O O O
+O O O O O O O O O B-protein O B-cell_type O
+O O B-protein O O B-cell_type I-cell_type I-cell_type I-cell_type I-cell_type O B-protein O B-protein I-protein I-protein I-protein O
+O O B-protein I-protein O B-protein O O O B-cell_type I-cell_type I-cell_type O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O
+O O O O O O O O O O O B-protein I-protein O B-protein O B-cell_type I-cell_type O
+O O O O O O O O O O O O O O B-cell_type I-cell_type O
+O O O O O O B-cell_type I-cell_type I-cell_type I-cell_type I-cell_type O
+O O O O O B-protein O O O O O B-protein O O O O O O B-protein O B-protein O O O O B-cell_line I-cell_line I-cell_line I-cell_line I-cell_line O B-cell_line O B-cell_line O O
+O O O B-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line I-cell_line O O O O O O O
+O O O O O O B-protein I-protein I-protein I-protein O O O O B-protein I-protein I-protein I-protein O O O O B-cell_line I-cell_line O
+O O O B-cell_line I-cell_line I-cell_line O O O O O O O O O B-protein I-protein B-protein O O B-protein I-protein O O O O O O O O O O O O O O O O O O
+O O B-cell_line O B-cell_type I-cell_type I-cell_type I-cell_type O O O O O O O O O O O O O B-protein O O O O B-protein I-protein I-protein O B-protein O O B-protein O O O O O O O O B-protein I-protein I-protein I-protein I-protein I-protein O O O O B-protein I-protein I-protein O B-protein I-protein I-protein I-protein O
+O O O O O O O O O B-protein I-protein O O O O O O O O B-DNA I-DNA O O O O O O O B-DNA I-DNA O O O O O O B-cell_line I-cell_line I-cell_line O
+O O O B-cell_line I-cell_line I-cell_line O O O O O O B-protein O O O O B-protein O O O O O O O O
+O O O B-protein O O O O B-protein O O B-cell_line I-cell_line O B-cell_type I-cell_type I-cell_type I-cell_type O
+O O O O O O O O O O O O O B-cell_line I-cell_line I-cell_line O
+B-protein I-protein O B-protein O B-protein I-protein O O O O B-DNA I-DNA O O O O O O O O O O O O O B-DNA I-DNA O B-DNA I-DNA O O O B-DNA I-DNA I-DNA I-DNA O B-cell_line I-cell_line I-cell_line O
+O O O O O O O O O O O O B-protein O B-DNA I-DNA O O O O O O B-RNA I-RNA O O O O O O
+B-RNA I-RNA O O O B-cell_type I-cell_type I-cell_type O O O O O B-cell_type O
+O B-DNA O O B-RNA I-RNA O O O O O O O O O
+O O O O B-protein O O O O O O O O O B-RNA I-RNA O B-protein O O
+O O O O O B-RNA I-RNA O O O O O B-DNA I-DNA O O O O O O O O O O O O O O
+O O O O O O O O B-RNA I-RNA O O O O O O O B-cell_type I-cell_type O
+O O O O O O O O O B-RNA I-RNA I-RNA O O O O O B-cell_line I-cell_line O O O O O O O B-cell_type O
+O O O O O O O B-DNA I-DNA O O O O O O O O O O O B-RNA I-RNA O O O B-cell_line I-cell_line I-cell_line O
+B-RNA I-RNA O O O O O O O O O O O O O O
+O O O O O O B-RNA I-RNA I-RNA O O O O B-cell_line I-cell_line O B-cell_line I-cell_line I-cell_line O O O O O O O O O O O O O O O O O B-cell_type O

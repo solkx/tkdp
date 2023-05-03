@@ -1,0 +1,40 @@
+O O O O O B-Amenity O O B-Rating I-Rating O O B-Hours
+O O B-Location I-Location I-Location I-Location I-Location O B-Rating I-Rating O B-Amenity I-Amenity
+B-Location B-Cuisine O B-Rating
+O O O B-Rating B-Dish I-Dish
+O O O B-Amenity I-Amenity O O B-Cuisine O B-Cuisine I-Cuisine O O O B-Location I-Location O B-Location O B-Rating I-Rating
+O O O O O O O B-Amenity I-Amenity O O B-Dish I-Dish
+O O B-Amenity I-Amenity I-Amenity I-Amenity B-Restaurant_Name I-Restaurant_Name I-Restaurant_Name O O B-Amenity I-Amenity I-Amenity
+O O O B-Amenity I-Amenity O B-Restaurant_Name I-Restaurant_Name I-Restaurant_Name O B-Hours
+O B-Restaurant_Name I-Restaurant_Name O O B-Amenity I-Amenity I-Amenity
+O B-Restaurant_Name I-Restaurant_Name O B-Amenity
+O O O B-Location O O O B-Dish
+O O O B-Location B-Cuisine
+O O O O O B-Cuisine O O B-Amenity I-Amenity O B-Location I-Location I-Location
+O O O O B-Cuisine O B-Location I-Location I-Location B-Amenity
+O O O O O O O B-Location O O O
+O O O B-Restaurant_Name O
+O O O B-Location B-Restaurant_Name O O O
+O O B-Hours I-Hours B-Restaurant_Name O B-Hours I-Hours I-Hours
+O B-Restaurant_Name O B-Amenity I-Amenity
+O O O B-Rating O B-Restaurant_Name
+O O O B-Price O O O
+O O O B-Amenity I-Amenity O O O B-Amenity I-Amenity O O B-Price I-Price
+O O O O O O O O B-Hours I-Hours I-Hours I-Hours O B-Price O
+O O O O O O O O B-Amenity I-Amenity B-Price I-Price
+B-Price I-Price O O O O O O O O B-Restaurant_Name I-Restaurant_Name
+O O O O O O O O B-Location O O O B-Hours I-Hours I-Hours
+O O O O O O O B-Hours O O B-Hours I-Hours I-Hours I-Hours
+O B-Restaurant_Name I-Restaurant_Name B-Amenity I-Amenity B-Hours I-Hours I-Hours I-Hours
+O O O O B-Dish I-Dish B-Hours I-Hours I-Hours
+O O B-Restaurant_Name I-Restaurant_Name I-Restaurant_Name I-Restaurant_Name B-Location I-Location B-Hours I-Hours I-Hours I-Hours I-Hours
+O O O O B-Rating B-Dish
+O O O O O B-Dish O O O
+O O O B-Cuisine O O B-Dish I-Dish O O O O B-Price O B-Price
+O O O O O B-Dish I-Dish I-Dish
+O O O O B-Dish I-Dish B-Hours I-Hours I-Hours
+B-Cuisine O
+O O O B-Rating B-Cuisine O B-Location
+O O O B-Cuisine O O O B-Location O O O B-Rating I-Rating O B-Price
+O B-Cuisine O O O B-Rating I-Rating B-Location I-Location I-Location
+O O O O O O O B-Cuisine I-Cuisine B-Location I-Location I-Location

@@ -1,0 +1,5 @@
+transformers
+OpenHowNet
+pytorch-crf
+tensorboard
+truecase
