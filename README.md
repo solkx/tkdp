@@ -20,4 +20,4 @@
 ```text
 python main.py
 ```
-Modify the parameter **dataset** and **k** in the file `run. py` to train different settings or data sets
+Modify the parameter **dataset** and **k** in the file `main. py` to train different settings or data sets
