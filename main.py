@@ -24,13 +24,14 @@ def seed_torch(seed=3306):
     torch.cuda.manual_seed_all(seed) # if you are using multi-GPU.
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.enabled = False
 
 parser = argparse.ArgumentParser(description='main',
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--datapath', default='dataset')
+parser.add_argument('--datapath', default='data')
 parser.add_argument('--dataset', default='CoNLL-2003')
-parser.add_argument('--train_text')
-parser.add_argument('--train_ner')
+parser.add_argument('--train_text', default='train_5_0_24.words')
+parser.add_argument('--train_ner', default='train_5_0_24.ner')
 parser.add_argument('--test_text', default='test.words')
 parser.add_argument('--test_ner', default='test.ner')
 parser.add_argument('--fewShot', default=5, type=int)
@@ -60,7 +61,7 @@ parser.add_argument('--gpu_id', default=0, type=str)
 parser.add_argument('--nonPrompt', default=False, type=str2bool)
 parser.add_argument('--seed', default=1005, type=int)
 parser.add_argument('--is_seed', default=True, type=str2bool)
-parser.add_argument('--log_path', type=str)
+parser.add_argument('--log_path', type=str, default="")
 parser.add_argument('--use_crf', default=False, type=str2bool)
 parser.add_argument('--is_share', default=True, type=str2bool)
 parser.add_argument('--sememe_emb', default="att", type=str, choices=["att", "knn", "random"])
@@ -70,7 +71,7 @@ parser.add_argument('--use_label', default=True, type=str2bool)
 parser.add_argument('--use_text', default=True, type=str2bool)
 parser.add_argument('--sememe_freeze', default=True, type=str2bool)
 parser.add_argument('--num_training_steps_times', default=250, type=float)
-parser.add_argument('--dev_batch_size', default=64, type=int)
+parser.add_argument('--dev_batch_size', default=32, type=int)
 parser.add_argument('--use_konwledge', default=True, type=str2bool)
 parser.add_argument('--save_model', default=False, type=str2bool)
 parser.add_argument('--save_preds', default=False, type=str2bool)
@@ -78,12 +79,16 @@ parser.add_argument('--is_train', default=True, type=str2bool)
 parser.add_argument('--save_model_path', default="", type=str)
 parser.add_argument('--load_model_path', default="", type=str)
 parser.add_argument('--tuning_methods', default="ours", type=str, choices=["ours", "ptuning", "prompt", "prefix"])
+parser.add_argument('--construct_sememe', default=True, type=str2bool)
+
 
 args = parser.parse_args()
-os.environ["CUDA_VISIBLE_DEVICES"]=args.gpu_id
+os.environ["CUDA_VISIBLE_DEVICES"]=f"{args.gpu_id}"
 if args.is_seed:
     seed_torch(args.seed)
 device = torch.device("cuda")
+if not os.path.exists("./logger"):
+    os.makedirs("./logger")
 from torch import nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pad_sequence
@@ -100,7 +105,7 @@ from sample_few_shot import get_label_dict
 from model import *
 from eval_util import batch_span_eval
 from data import *
-from torch.utils.tensorboard import SummaryWriter
+
 
 def get_logger():
     pathname = f"./logger/{args.log_path}/{args.dataset}_len-{args.pre_seq_len}_num-{args.num_hidden_layers}_epoch-{args.epoch}_shot-{args.fewShot}_{args.train_text.split('_')[-2]}_seed-{args.seed}_label-{args.use_label_sememe}_text-{args.use_text_sememe}_times-{int(args.num_training_steps_times)}_{time.strftime('%m-%d_%H-%M-%S')}.txt"
@@ -294,14 +299,24 @@ if __name__ == "__main__":
 
     label2ids, id2labels = [], []
     processed_training_set, train_label_sentence_dicts, processed_dev_set, dev_label_sentence_dicts, processed_test_set, test_label_sentence_dicts = [], [], [], [], [], []
-    with open(f"./data/{args.dataset}/label_sememes_id.json", "r", encoding="utf-8") as f:
-        label_id_list = json.loads(f.read())
-    with open(f"./data/{args.dataset}/text_sememes_id_{args.train_text.split('.')[0]}.json", "r", encoding="utf-8") as f:
-        train_id_list = json.loads(f.read())
-    with open(f"./data/{args.dataset}/text_sememes_id_dev_{args.fewShot}.json", "r", encoding="utf-8") as f:
-        dev_id_list = json.loads(f.read())
-    with open(f"./data/{args.dataset}/text_sememes_id_test.json", "r", encoding="utf-8") as f:
-        test_id_list = json.loads(f.read())
+    if not args.construct_sememe:
+        with open(f"./data/{args.dataset}/label_sememes_id.json", "r", encoding="utf-8") as f:
+            label_id_list = json.loads(f.read())
+        with open(f"./data/{args.dataset}/text_sememes_id_{args.train_text.split('.')[0]}.json", "r", encoding="utf-8") as f:
+            train_id_list = json.loads(f.read())
+        with open(f"./data/{args.dataset}/text_sememes_id_dev_{args.fewShot}.json", "r", encoding="utf-8") as f:
+            dev_id_list = json.loads(f.read())
+        with open(f"./data/{args.dataset}/text_sememes_id_test.json", "r", encoding="utf-8") as f:
+            test_id_list = json.loads(f.read())
+    else:
+        with open(f"./data/{args.dataset}/label_sememes_tree.json", "r", encoding="utf-8") as f:
+            label_id_list = json.loads(f.read())
+        with open(f"./data/{args.dataset}/text_sememes_tree_{args.train_text.split('.')[0]}.json", "r", encoding="utf-8") as f:
+            train_id_list = json.loads(f.read())
+        with open(f"./data/{args.dataset}/text_sememes_tree_dev_{args.fewShot}.json", "r", encoding="utf-8") as f:
+            dev_id_list = json.loads(f.read())
+        with open(f"./data/{args.dataset}/text_sememes_tree_test.json", "r", encoding="utf-8") as f:
+            test_id_list = json.loads(f.read())
     if not args.load_dataset:
         for train_text, train_ner, dev_text, dev_ner, test_text, test_ner in zip(train_texts, train_ners, dev_texts, dev_ners, test_texts, test_ners):
             with open(train_ner) as fner, open(train_text) as f:
@@ -447,13 +462,13 @@ if __name__ == "__main__":
             if best_dev_f1 < dev_microf1 or epoch == 0:
                 best_dev_f1 = dev_microf1
                 start_time = time.time()
-                if epoch == 0:
+                if epoch == 0 and not args.construct_sememe:
                     valid_loss, microp, micror, test_microf1, microp_per_type, micror_per_type, microf1_per_type, test_load_dic = test(processed_test_set, "test", epoch, test_label_sentence_dicts, best_model = model, soft_kmeans = SOFT_KMEANS, is_test=True)
                     secs = time.time() - start_time
                     logger.info(f'F1: {test_microf1 * 100:.1f}%(test)\t{secs} seconds')
                 bestModel = copy.deepcopy(model.state_dict())
                 bestEpoch = epoch
-            if epoch == 0:
+            if epoch == 0 and not args.construct_sememe:
                 torch.save(train_load_dic, f"./data/{args.dataset}/train_{args.fewShot}.emb")
                 torch.save(dev_load_dic, f"./data/{args.dataset}/dev_{args.fewShot}.emb")
                 torch.save(test_load_dic, f"./data/{args.dataset}/test_{args.fewShot}.emb")

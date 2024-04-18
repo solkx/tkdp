@@ -1,5 +1,5 @@
-transformers
+transformers==4.11.3
 OpenHowNet
-pytorch-crf
+pytorch-crf==0.7.0
 tensorboard
 truecase

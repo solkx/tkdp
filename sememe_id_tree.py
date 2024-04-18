@@ -7,7 +7,46 @@ from tqdm import tqdm
 import os
 # OpenHowNet.download()
 
+def layer_per_pro(root, ids2nodes, nodes2ids, edges, root_word=""):
+    if not root_word:
+        root_word = f'{str(root["name"])}_{len(ids2nodes)}'
+    if "children" in root:
+        children = root["children"]
+        for child in children:
+            child_word = f'{str(child["name"])}_{len(ids2nodes)}'
+            ids2nodes[len(ids2nodes)] = child_word
+            nodes2ids[child_word] = len(nodes2ids)
+            edges[f"{nodes2ids[root_word]}-{nodes2ids[child_word]}"] = child["role"]
+            ids2nodes, nodes2ids, edges = layer_per_pro(child, ids2nodes, nodes2ids, edges, child_word)
+    return ids2nodes, nodes2ids, edges
 
+
+    
+
+def tree2adj(tree_list):
+    sense_list = []
+    for pre_sense_tree in tree_list:
+        root = pre_sense_tree["sememes"]
+        real_root_word = f'{"|".join(str(root["name"]).split("|")[1:])}_0'
+        sense_ids2nodes = {0:real_root_word}
+        sense_nodes2ids = {real_root_word:0}
+        sense_edges = {}
+        # print(pre_sense_tree)
+        ids2nodes, nodes2ids, edges = layer_per_pro(root, sense_ids2nodes, sense_nodes2ids, sense_edges, real_root_word)
+        # print(ids2nodes)
+        # print(nodes2ids)
+        # print(edges)
+        assert len(ids2nodes) == len(nodes2ids)
+        init_adj = torch.zeros((len(ids2nodes), len(ids2nodes)))
+        for edge in edges:
+            i, j = edge.split("-")
+            init_adj[int(i), int(j)] = 1
+        nodes_list = [node for node in nodes2ids]
+        assert len(nodes_list) == init_adj.shape[0]
+        sense_list.append([nodes_list, init_adj.tolist()])
+    # exit()
+    return sense_list
+            
 
 def main(dataset):
     
@@ -17,6 +56,7 @@ def main(dataset):
     print(all_label)
 
     hownet_dict = OpenHowNet.HowNetDict()
+
     label_list = []
     label_id_list = []
     for label in all_label:
@@ -59,31 +99,32 @@ def main(dataset):
                 item_list = []
                 item_id_list = []
                 word = word.lower()
-                result_list = hownet_dict.get_sense(word)
-                sememe_list = []
-                for sense_example in result_list:
-                    if sense_example.get_sememe_list() not in sememe_list:
-                        sememe_list.append(sense_example.get_sememe_list())
+                pretree_list = hownet_dict.get_sememes_by_word(word=word, display='dict')
+                sememe_adj_list = tree2adj(pretree_list)
                 item_list.append([p_word])
                 item_id_list.append(tokenizer.convert_tokens_to_ids([p_word]))
                 senses = []
                 senses_id = []
-                for sememe in sememe_list:
+                for sememe_adj in sememe_adj_list:
+                    sememe = sememe_adj[0]
+                    adj = sememe_adj[-1]
                     sememes = []
                     sememes_id = []
                     for item in sememe:
                         item = str(item)
-                        sememes_id.extend(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:]))
-                        sememes.extend(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:])
+                        if not tokenizer.convert_tokens_to_ids(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:]):
+                            print(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:]))
+                        sememes_id.append(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:]))
+                        sememes.append(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:])
                     senses.append(sememes)
-                    senses_id.append(sememes_id)
+                    senses_id.append([sememes_id, adj])
                 item_list.append(senses)
                 item_id_list.append(senses_id)
             words_list.append(item_list)
             words_id_list.append(item_id_list)
         label_list.append(words_list)
         label_id_list.append(words_id_list)
-    with open(f"./data/{dataset}/label_sememes_id.json", "w", encoding="utf-8") as f:
+    with open(f"./data/{dataset}/label_sememes_tree.json", "w", encoding="utf-8") as f:
         f.write(json.dumps(label_id_list))
 
 
@@ -137,33 +178,33 @@ def main(dataset):
                     item_list = []
                     item_id_list = []
                     word = word.lower()
-                    result_list = hownet_dict.get_sense(word)
-                    sememe_list = []
-                    for sense_example in result_list:
-                        if sense_example.get_sememe_list() not in sememe_list:
-                            sememe_list.append(sense_example.get_sememe_list())
-                    if len(sememe_list) == 0:
-                        continue
+                    pretree_list = hownet_dict.get_sememes_by_word(word=word, display='dict')
+                    sememe_adj_list = tree2adj(pretree_list)
                     item_list.append([p_word])
                     item_id_list.append(tokenizer.convert_tokens_to_ids([p_word]))
                     senses = []
                     senses_id = []
-                    for sememe in sememe_list:
+                    for sememe_adj in sememe_adj_list:
+                        sememe = sememe_adj[0]
+                        adj = sememe_adj[-1]
                         sememes = []
                         sememes_id = []
                         for item in sememe:
                             item = str(item)
-                            sememes_id.extend(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:]))
-                            sememes.extend(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:])
+                            if "|||" not in item:
+                                sememes_id.append(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:]))
+                            else:
+                                sememes_id.append(tokenizer.convert_tokens_to_ids(tokenizer.tokenize(f"{startToken} |")[1:]))
+                            sememes.append(tokenizer.tokenize(f"{startToken} {item.split('|')[0]}")[1:])
                         senses.append(sememes)
-                        senses_id.append(sememes_id)
+                        senses_id.append([sememes_id, adj])
                     item_list.append(senses)
                     item_id_list.append(senses_id)
                 words_list.append(item_list)
                 words_id_list.append(item_id_list)
             sentence_list.append(words_list)
             sentence_id_list.append(words_id_list)
-        with open(f"./data/{dataset}/text_sememes_id_{name}.json", "w", encoding="utf-8") as f:
+        with open(f"./data/{dataset}/text_sememes_tree_{name}.json", "w", encoding="utf-8") as f:
             f.write(json.dumps(sentence_id_list))
 
 

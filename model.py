@@ -1,18 +1,60 @@
 # naive token-level classification model (including bert-based and roberta-based)
 
 import torch
-import transformers
-from transformers import RobertaTokenizer, RobertaForMaskedLM, RobertaModel, RobertaForTokenClassification, RobertaConfig
-from transformers import BertTokenizer, BertModel, BertForTokenClassification, BertConfig
+from transformers import RobertaModel, RobertaForTokenClassification, RobertaConfig
+from transformers import BertModel, BertForTokenClassification, BertConfig
 import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss
 from torch import nn
-from typing import List, Optional
-import copy
-import OpenHowNet
-import json
+import random
 from torchcrf import CRF
+import math
 
+class GCN(nn.Module):
+    def  __init__(self, nfeat, nhid, nclass=0, dropout=0.1):
+        super(GCN, self).__init__()
+
+        self.gc1 = GraphConvolution(nfeat, nhid)
+        # self.gc2 = GraphConvolution(nhid, nclass)
+        self.dropout = dropout
+
+    def forward(self, x, adj):    #x特征矩阵,agj邻接矩阵 
+        x = F.relu(self.gc1(x, adj))
+        x = F.dropout(x, self.dropout, training=self.training)
+        # x = self.gc2(x, adj)
+        # return F.log_softmax(x, dim=1)
+        return x
+
+class GraphConvolution(nn.Module):
+    """
+    Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
+    """
+
+    def __init__(self, in_features, out_features, bias=True):
+        super(GraphConvolution, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = nn.Parameter(torch.FloatTensor(in_features, out_features))
+        if bias:
+            self.bias = nn.Parameter(torch.FloatTensor(out_features))
+        else:
+            self.register_parameter('bias', None)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        stdv = 1. / math.sqrt(self.weight.size(1))
+        self.weight.data.uniform_(-stdv, stdv)
+        if self.bias is not None:
+            self.bias.data.uniform_(-stdv, stdv)
+
+    def forward(self, input, adj):
+        support = torch.mm(input, self.weight)
+        output = torch.spmm(adj, support)
+        if self.bias is not None:
+            return output + self.bias
+        else:
+            return output
+    
 class PrefixEncoder(nn.Module):
     r'''
     The torch.nn model to encode the prefix
@@ -48,8 +90,8 @@ class LabelSememeFusionPrompt(nn.Module):
         self.use_label = args.use_label
         self.use_text = args.use_text
         self.sememe_emb = args.sememe_emb
-        self.label_sememe = SememeEmbeddingKNN(config, hidden_size, self.use_label_sememe, self.sememe_emb, roberta_embedding, self.is_share)
-        self.text_sememe = SememeEmbeddingKNN(config, hidden_size, self.use_text_sememe, self.sememe_emb, roberta_embedding, self.is_share)
+        self.label_sememe = SememeEmbeddingKNN(config, hidden_size, self.use_label_sememe, self.sememe_emb, roberta_embedding, self.is_share, args.construct_sememe)
+        self.text_sememe = SememeEmbeddingKNN(config, hidden_size, self.use_text_sememe, self.sememe_emb, roberta_embedding, self.is_share, args.construct_sememe)
         self.lstm_head = torch.nn.LSTM(input_size=hidden_size,
                                        hidden_size=hidden_size // 2,
                                        num_layers=2,
@@ -115,9 +157,10 @@ class LabelSememeFusionPrompt(nn.Module):
         return fused_feature, init_text_feature, init_label_feature
 
 class SememeEmbeddingKNN(nn.Module):
-    def __init__(self, config, hidden_size, use_sememe, sememe_emb, roberta_embedding, is_share):
+    def __init__(self, config, hidden_size, use_sememe, sememe_emb, roberta_embedding, is_share, construct_sememe):
         super(SememeEmbeddingKNN, self).__init__()
         self.is_share = is_share
+        self.construct_sememe = construct_sememe
         if not self.is_share:
             self.embedding = torch.nn.Embedding(config.vocab_size, hidden_size)
         else:
@@ -125,6 +168,7 @@ class SememeEmbeddingKNN(nn.Module):
         self.use_sememe = use_sememe
         self.sememe_emb = sememe_emb
         self.hidden_size = hidden_size
+        self.gcn = GCN(hidden_size, hidden_size)
 
     def forward(self, label_id):
         sememe_s = []
@@ -136,25 +180,39 @@ class SememeEmbeddingKNN(nn.Module):
                 if not self.is_share:
                     s = self.embedding(torch.tensor(word_list[0]).cuda())
                 else:
-                    # print(word_list[0])
                     s = self.embedding(torch.tensor(word_list[0]).cuda().unsqueeze(0)).squeeze(0)
                 senses_id_list = word_list[1]
                 if self.use_sememe:
                     if len(senses_id_list) != 0:
-                        if not self.is_share:
-                            sememe_tensor = torch.cat([self.embedding(torch.tensor(sm).cuda()) for sm in senses_id_list], dim=0)
+                        if not self.construct_sememe:
+                            if not self.is_share:
+                                sememe_tensor = torch.cat([self.embedding(torch.tensor(sm).cuda()) for sm in senses_id_list], dim=0)
+                            else:
+                                sememe_tensor = torch.cat([self.embedding(torch.tensor(sm).cuda().unsqueeze(0)).squeeze(0) for sm in senses_id_list], dim=0)
                         else:
-                            sememe_tensor = torch.cat([self.embedding(torch.tensor(sm).cuda().unsqueeze(0)).squeeze(0) for sm in senses_id_list], dim=0)
-                    if self.sememe_emb == "att":
-                        distance = F.pairwise_distance(s, sememe_tensor, p=2)
-                        attentionSocre = torch.softmax(distance, dim=0)
-                        attentionSememeTensor = torch.einsum("a,ab->ab", attentionSocre, sememe_tensor)
-                        span.append(torch.cat([attentionSememeTensor.mean(0).unsqueeze(0), s], dim=0).mean(0))
-                    elif self.sememe_emb == "knn":
-                        distance = F.pairwise_distance(s, sememe_tensor, p=2)
-                        span.append(torch.cat([torch.stack([sememe_tensor[idx] for idx in torch.sort(distance, descending=True)[1][:3]], dim=0).mean(0).unsqueeze(0), s], dim=0).mean(0))
-                    else:
-                        span.append(torch.cat([torch.stack([sememe_tensor[random.randint(0, sememe_tensor.shape[0])] for idx in range(3)], dim=0).mean(0).unsqueeze(0), s], dim=0).mean(0))
+                            sememe_tensor = []
+                            for sense in senses_id_list:
+                                nodes = sense[0]
+                                adj = torch.FloatTensor(sense[1]).cuda()
+                                if not self.is_share:
+                                    nodes_tensor = torch.cat([torch.mean(self.embedding(torch.tensor(node_tokens).cuda()), dim=0).unsqueeze(0) for node_tokens in nodes], dim=0)
+                                else:
+                                    nodes_tensor = torch.cat([torch.mean(self.embedding(torch.tensor(node_tokens).cuda().unsqueeze(0)).squeeze(0),  dim=0).unsqueeze(0) for node_tokens in nodes], dim=0)
+                                assert adj.shape[0] == nodes_tensor.shape[0]
+                                out = self.gcn(nodes_tensor, adj)[0, :]
+                                sememe_tensor.append(out)
+                            sememe_tensor = torch.stack(sememe_tensor, dim=0)
+                        if self.sememe_emb == "att":
+                            distance = F.pairwise_distance(s, sememe_tensor, p=2)
+                            attentionSocre = torch.softmax(distance, dim=0)
+                            attentionSememeTensor = torch.einsum("a,ab->ab", attentionSocre, sememe_tensor)
+                            span.append(torch.cat([attentionSememeTensor.mean(0).unsqueeze(0), s], dim=0).mean(0))
+                        elif self.sememe_emb == "knn":
+                            distance = F.pairwise_distance(s, sememe_tensor, p=2)
+                            span.append(torch.cat([torch.stack([sememe_tensor[idx] for idx in torch.sort(distance, descending=True)[1][:3]], dim=0).mean(0).unsqueeze(0), s], dim=0).mean(0))
+                        else:
+                            span.append(torch.cat([torch.stack([sememe_tensor[random.randint(0, sememe_tensor.shape[0])] for idx in range(3)], dim=0).mean(0).unsqueeze(0), s], dim=0).mean(0))
+                        
                 else:
                     span.append(s.mean(dim=0))
             if len(span) != 0:
@@ -191,11 +249,12 @@ class RobertaNER(RobertaForTokenClassification):
         self.prefix_encoder = PrefixEncoder(args, config.hidden_size)
         self.max_seq_len = args.max_seq_len
         self.sememe_fusion = LabelSememeFusionPrompt(config, config.hidden_size, args, self.dataset_label_nums[0], self.roberta.embeddings.word_embeddings)
-        if args.sememe_freeze:
-            for param in self.sememe_fusion.label_sememe.parameters():
-                param.requires_grad = False
-            for param in self.sememe_fusion.text_sememe.parameters():
-                param.requires_grad = False
+        if not args.construct_sememe:
+            if args.sememe_freeze:
+                for param in self.sememe_fusion.label_sememe.parameters():
+                    param.requires_grad = False
+                for param in self.sememe_fusion.text_sememe.parameters():
+                    param.requires_grad = False
         self.use_konwledge = args.use_konwledge
         self.dataset = args.dataset
         self.few_shot_num = args.fewShot
@@ -367,6 +426,7 @@ class BertNER(BertForTokenClassification):
             for param in self.sememe_fusion.text_sememe.parameters():
                 param.requires_grad = False
         self.use_konwledge = args.use_konwledge
+        self.construct_sememe = args.construct_sememe
         self.dataset = args.dataset
         self.few_shot_num = args.fewShot
         self.args = args
@@ -409,15 +469,18 @@ class BertNER(BertForTokenClassification):
                     load_dic[str(init_text[iii])] = text_feature[iii]
                 torch.save(label_feature, f"./data/{self.dataset}/label_{self.few_shot_num}.emb")
             else:
-                if is_type == "train":
-                    load_d = torch.load(f"./data/{self.dataset}/train_{self.few_shot_num}.emb")
-                if is_type == "dev":
-                    load_d = torch.load(f"./data/{self.dataset}/dev_{self.few_shot_num}.emb")
-                if is_type == "test":
-                    load_d = torch.load(f"./data/{self.dataset}/test_{self.few_shot_num}.emb")
-                label_feature = torch.load(f"./data/{self.dataset}/label_{self.few_shot_num}.emb").cuda()
-                text_feature = torch.stack([load_d[str(init_text[iii])] for iii in range(batch_size)], dim=0).cuda()
-                past_key_values = self.sememe_fusion(past_key_values, label_id_list, none_sememes_id_list, label_feature, text_feature)[0]
+                if not self.construct_sememe:
+                    if is_type == "train":
+                        load_d = torch.load(f"./data/{self.dataset}/train_{self.few_shot_num}.emb")
+                    if is_type == "dev":
+                        load_d = torch.load(f"./data/{self.dataset}/dev_{self.few_shot_num}.emb")
+                    if is_type == "test":
+                        load_d = torch.load(f"./data/{self.dataset}/test_{self.few_shot_num}.emb")
+                    label_feature = torch.load(f"./data/{self.dataset}/label_{self.few_shot_num}.emb").cuda()
+                    text_feature = torch.stack([load_d[str(init_text[iii])] for iii in range(batch_size)], dim=0).cuda()
+                    past_key_values = self.sememe_fusion(past_key_values, label_id_list, none_sememes_id_list, label_feature, text_feature)[0]
+                else:
+                    past_key_values = self.sememe_fusion(past_key_values, label_id_list, none_sememes_id_list)[0]
         if self.args.tuning_methods == "ours" or self.args.tuning_methods == "prefix":
             if self.args.tuning_methods == "prefix":
                 past_key_values = past_key_values.expand(-1,-1,self.n_layer * 2,-1)
